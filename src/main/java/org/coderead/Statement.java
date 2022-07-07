@@ -25,37 +25,65 @@ public class Statement {
 	}
 
 	public String show() {
-		int totalAmount = 0;
-		int volumeCredits = 0;
-		String result = String.format("Statement for %s", invoice.getCustomer());
-		StringBuilder stringBuilder = new StringBuilder(result);
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append(String.format("Statement for %s", invoice.getCustomer()));
+		stringBuilder.append(getStringBuilder());
+		stringBuilder.append(String.format("Amount owed is %s\n", formatUSD(getTotalAmount())));
+		stringBuilder.append(String.format("You earned %s credits\n", getVolumeCredits()));
+		return stringBuilder.toString();
+	}
 
+	private StringBuilder getStringBuilder() {
+		StringBuilder builder = new StringBuilder();
 		for (Performance performance : invoice.getPerformances()) {
 			Play play = plays.get(performance.getPlayId());
-			int thisAmount = 0;
-			switch (play.getType()) {
-				case "tragedy":
-					thisAmount = getTragedyAmount(performance);
-					break;
-				case "comedy":
-					thisAmount = getComedyAmount(performance);
-					break;
-				default:
-					throw new RuntimeException("unknown type:" + play.getType());
-			}
-			if ("tragedy".equals(play.getType())) {
-				volumeCredits += getTragedyVolumeCredits(performance);
-			}
-			if ("comedy".equals(play.getType())) {
-				volumeCredits += getComedyVolumeCredits(performance);
-			}
-
-			stringBuilder.append(String.format(" %s: %s (%d seats)\n", play.getName(), formatUSD(thisAmount), performance.getAudience()));
-			totalAmount += thisAmount;
+			builder.append(String.format(" %s: %s (%d seats)\n", play.getName(), formatUSD(getThisAmount(performance, play)), performance.getAudience()));
 		}
-		stringBuilder.append(String.format("Amount owed is %s\n", formatUSD(totalAmount)));
-		stringBuilder.append(String.format("You earned %s credits\n", volumeCredits));
-		return stringBuilder.toString();
+		return builder;
+	}
+
+	private int getVolumeCredits() {
+		int volumeCredits = 0;
+		for (Performance performance : invoice.getPerformances()) {
+			Play play = plays.get(performance.getPlayId());
+			volumeCredits += getVolumeCredits(performance, play);
+		}
+		return volumeCredits;
+	}
+
+	private int getTotalAmount() {
+		int totalAmount = 0;
+		for (Performance performance : invoice.getPerformances()) {
+			Play play = plays.get(performance.getPlayId());
+			totalAmount += getThisAmount(performance, play);
+		}
+		return totalAmount;
+	}
+
+	private double getVolumeCredits(Performance performance, Play play) {
+		double temp = 0;
+		if ("tragedy".equals(play.getType())) {
+			temp = getTragedyVolumeCredits(performance);
+		}
+		if ("comedy".equals(play.getType())) {
+			temp = getComedyVolumeCredits(performance);
+		}
+		return temp;
+	}
+
+	private int getThisAmount(Performance performance, Play play) {
+		int thisAmount = 0;
+		switch (play.getType()) {
+			case "tragedy":
+				thisAmount = getTragedyAmount(performance);
+				break;
+			case "comedy":
+				thisAmount = getComedyAmount(performance);
+				break;
+			default:
+				throw new RuntimeException("unknown type:" + play.getType());
+		}
+		return thisAmount;
 	}
 
 	private double getComedyVolumeCredits(Performance performance) {
