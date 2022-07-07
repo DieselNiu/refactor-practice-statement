@@ -16,8 +16,6 @@ import java.util.Map;
  */
 public class Statement {
 
-	private final IPerformanceCalculator tragedyCalculator = new TragedyCalculator();
-	private final IPerformanceCalculator comedyCalculator = new ComedyCalculator();
 	private Invoice invoice;
 	private Map<String, Play> plays;
 
@@ -30,8 +28,8 @@ public class Statement {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(String.format("Statement for %s", invoice.getCustomer()));
 		stringBuilder.append(getStringBuilder());
-		stringBuilder.append(String.format("Amount owed is %s\n", formatUSD(getTotalAmount())));
-		stringBuilder.append(String.format("You earned %s credits\n", getVolumeCredits()));
+		stringBuilder.append(String.format("Amount owed is %s\n", formatUSD(invoice.getTotalAmount(plays))));
+		stringBuilder.append(String.format("You earned %s credits\n", invoice.getVolumeCredits(plays)));
 		return stringBuilder.toString();
 	}
 
@@ -39,46 +37,9 @@ public class Statement {
 		StringBuilder builder = new StringBuilder();
 		for (Performance performance : invoice.getPerformances()) {
 			Play play = plays.get(performance.getPlayId());
-			builder.append(String.format(" %s: %s (%d seats)\n", play.getName(), formatUSD(getThisAmount(performance, play)), performance.getAudience()));
+			builder.append(String.format(" %s: %s (%d seats)\n", play.getName(), formatUSD(AbstractPerformanceCalculator.getPerformanceCalculator(play.getType()).getAmount(performance)), performance.getAudience()));
 		}
 		return builder;
-	}
-
-	private int getVolumeCredits() {
-		int volumeCredits = 0;
-		for (Performance performance : invoice.getPerformances()) {
-			Play play = plays.get(performance.getPlayId());
-			volumeCredits += getVolumeCredits(performance, play);
-		}
-		return volumeCredits;
-	}
-
-	private int getTotalAmount() {
-		int totalAmount = 0;
-		for (Performance performance : invoice.getPerformances()) {
-			Play play = plays.get(performance.getPlayId());
-			totalAmount += getThisAmount(performance, play);
-		}
-		return totalAmount;
-	}
-
-	private double getVolumeCredits(Performance performance, Play play) {
-		return getPerformanceCalculator(play).getVolumeCredits(performance);
-	}
-
-	private IPerformanceCalculator getPerformanceCalculator(Play play) {
-		IPerformanceCalculator calculator = null;
-		if ("tragedy".equals(play.getType())) {
-			calculator = tragedyCalculator;
-		}
-		if ("comedy".equals(play.getType())) {
-			calculator = comedyCalculator;
-		}
-		return calculator;
-	}
-
-	private double getThisAmount(Performance performance, Play play) {
-		return getPerformanceCalculator(play).getAmount(performance);
 	}
 
 	private String formatUSD(double thisAmount) {
