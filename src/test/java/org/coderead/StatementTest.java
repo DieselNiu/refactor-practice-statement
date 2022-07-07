@@ -4,10 +4,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import org.coderead.model.Invoice;
 import org.coderead.model.Play;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * 新建类
@@ -43,6 +44,6 @@ public class StatementTest {
         Invoice invoice = JSONObject.parseObject(invoices, Invoice.class);
         Statement statement = new Statement(invoice, playMap);
         String result = statement.show();
-        Assert.assertEquals(expected, result);
+        assertEquals(expected, result);
     }
 }
